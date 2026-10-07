@@ -1,6 +1,7 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 const zod = require('zod')
 require('dotenv').config()
 const userModel = require("./db")
@@ -29,6 +30,10 @@ const userSchema = zod.object({
         )
 })
 
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + "/index.html")
+})
+
 app.use(express.json())
 app.post('/signup', async (req, res) => {
     const data = {
@@ -55,9 +60,11 @@ app.post('/signup', async (req, res) => {
             })
         }
 
+        const hashedPassword = await bcrypt.hash(data.password, 5)
+
         await userModel.create({
             username: data.username,
-            password: data.password
+            password: hashedPassword
         })
 
         return res.status(201).json({
@@ -89,7 +96,6 @@ app.post('/signin', async (req, res) => {
     try {
         const user = await userModel.findOne({
             username: data.username,
-            password: data.password
         })
 
         if (!user) {
@@ -98,14 +104,24 @@ app.post('/signin', async (req, res) => {
             })
         }
 
-        const token = jwt.sign({
-            userId: user._id
-        }, process.env.JWT_SECRET)
+        const passwordMatch = await bcrypt.compare(data.password, user.password)
 
-        return res.status(200).json({
-            message: 'signed in successfully',
-            token: token
-        })
+        if (passwordMatch) {
+            const token = jwt.sign({
+                userId: user._id
+            }, process.env.JWT_SECRET)
+
+            return res.status(200).json({
+                message: 'signed in successfully',
+                token: token
+            })
+        }
+        else {
+            return res.status(403).json({
+                message: 'incorrect credentials'
+            })
+        }
+
     } catch (err) {
         console.log(err)
 
@@ -122,7 +138,7 @@ async function main() {
         console.log('MongoDb connected')
 
         app.listen(process.env.PORT, () => {
-            console.log(`server running on http://localhost/:${process.env.PORT}`)
+            console.log(`server running on http://localhost:${process.env.PORT}`)
         })
     } catch (err) {
         console.log("MongoDb connection failed")

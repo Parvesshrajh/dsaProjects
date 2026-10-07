@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tIc*tAc*tOe</title>
+    <style>
+        #change {
+            color: #4da6ff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #change:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <div>BlackWhite's Tic Tac Toe</div>
+        <center>
+            <div id="upOrIn">SignUp</div>
+            <label for="username">
+                username:
+                <input type="text" id="username">
+            </label>
+            <br>
+            <label for="password">
+                password:
+                <input type="password" id="password">
+            </label>
+            <br>
+            <button id="submitbtn" onclick="post()">signup</button>
+        </center>
+        <p id="question">
+            If you already have an account?
+            <a id="change" onclick="change()" href="#">signin</a>
+        </p>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    async function post() {
+        const upOrIn = document.getElementById("upOrIn").innerHTML
+
+        const route = (upOrIn === "SignUp") ? "signup" : "signin"
+
+        const username = document.getElementById("username").value
+        const password = document.getElementById("password").value
+
+        try {
+            const response = await axios.post(`/${route}`, {
+                username: username,
+                password: password
+            })
+
+            console.log(response)
+            console.log(response.data)
+            console.log(response.data.message)
+
+            if (route === 'signin') {
+                localStorage.setItem("token", response.data.token)
+            }
+        } catch (err) {
+            console.log(err.response?.data)
+        }
+    }
+    function change() {
+        const upOrIn = document.getElementById("upOrIn")
+        const submitbtn = document.getElementById("submitbtn")
+        const question = document.getElementById("question")
+
+        if (upOrIn.innerHTML === "SignUp") {
+            upOrIn.innerHTML = "SignIn"
+            submitbtn.innerHTML = "signin"
+            question.innerHTML = `If you don't have an account!
+                    <a id="change" onclick="change()" href="#">signup</a>`
+        }
+        else {
+            upOrIn.innerHTML = "SignUp"
+            submitbtn.innerHTML = "signup"
+            question.innerHTML = `If you already have an account?
+                    <a id="change" onclick="change()" href="#">signin</a>`
+        }
+    }
+</script>
+
+</html>
