@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tIc*tAc*tOe</title>
+    <style>
+        #box {
+            margin: 0;
+            min-height: 60vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #upperbox {
+            display: grid;
+            grid-template-columns: 50% 50%;
+        }
+
+        #name {
+            display: flex;
+            justify-content: end;
+        }
+
+        .grid1 {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            pointer-events: none;
+        }
+
+        .cell {
+            border: 1px solid black;
+            cursor: pointer;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 60px;
+            font-weight: bold;
+        }
+
+        #xo {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="upperbox">
+        <h1>BlackWhite's</h1>
+        <h1 id="name">TicTacToe</h1>
+    </div>
+    <div id="box">
+        <div class="grid1">
+            <div class="cell" id="1" onclick="choose(id)"></div>
+            <div class="cell" id="2" onclick="choose(id)"></div>
+            <div class="cell" id="3" onclick="choose(id)"></div>
+
+            <div class="cell" id="4" onclick="choose(id)"></div>
+            <div class="cell" id="5" onclick="choose(id)"></div>
+            <div class="cell" id="6" onclick="choose(id)"></div>
+
+            <div class="cell" id="7" onclick="choose(id)"></div>
+            <div class="cell" id="8" onclick="choose(id)"></div>
+            <div class="cell" id="9" onclick="choose(id)"></div>
+        </div>
+    </div>
+    <div id="xo">
+        <button onclick="selectSymbol('X')">
+            <h1>X</h1>
+        </button>
+        <button onclick="selectSymbol('O')">
+            <h1>O</h1>
+        </button>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    let Symbol = ''
+    async function selectSymbol(symbol) {
+        console.log('you selected: ', symbol)
+        Symbol = symbol
+        try {
+            const token = localStorage.getItem("token")
+
+            const response = await axios.post('/game', {
+                playerWish: symbol
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            console.log(response.data)
+        } catch (err) {
+            console.log(err.response?.data)
+        }
+        document.getElementById("xo").style.display = "none"
+        document.querySelector(".grid1").style.pointerEvents = "auto"
+    }
+
+    async function choose(id) {
+        try {
+            const token = localStorage.getItem("token")
+
+            const response = await axios.post('/game', {
+                boardIndex: id
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            const board = response.data.board
+
+            for (let i = 0; i < board.length; i++) {
+                document.getElementById(i + 1).innerHTML = board[i]
+            }
+        } catch (err) {
+            console.log(err.response?.data)
+        }
+    }
+</script>
+
+</html>

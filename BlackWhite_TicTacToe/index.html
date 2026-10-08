@@ -63,6 +63,8 @@
 
             if (route === 'signin') {
                 localStorage.setItem("token", response.data.token)
+
+                window.location.href = "/player"
             }
         } catch (err) {
             console.log(err.response?.data)

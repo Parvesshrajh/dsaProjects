@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const zod = require('zod')
 require('dotenv').config()
 const userModel = require("./db")
+const auth = require("./auth")
 
 
 const app = express()
@@ -29,6 +30,7 @@ const userSchema = zod.object({
             "Password must contain at least one special character"
         )
 })
+const games = new Map()
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + "/index.html")
@@ -130,6 +132,123 @@ app.post('/signin', async (req, res) => {
         })
     }
 })
+
+app.get('/player', (req, res) => {
+    return res.sendFile(__dirname + "/game.html")
+})
+
+app.use(auth)
+
+app.post('/game', (req, res) => {
+
+    const userId = req.userId
+
+    const playerWish = req.body.playerWish
+    const boardIndex = req.body.boardIndex
+
+    if (!games.has(userId)) {
+        games.set(userId, {
+            symbol: '',
+            oppositeSymbol: '',
+            board: ['', '', '', '', '', '', '', '', '',]
+        })
+    }
+
+    const game = games.get(userId)
+
+    if (playerWish) {
+        game.symbol = playerWish
+        game.oppositeSymbol = game.symbol === 'X' ? 'O' : 'X'
+
+        return res.json({
+            message: 'symbol selected'
+        })
+    }
+
+    if (boardIndex) {
+        const index = Number(boardIndex) - 1
+        if (game.board[index] !== '') {
+            return res.status(400).json({
+                message: 'cell already occupied',
+                board: game.board
+            })
+        }
+
+        game.board[index] = game.symbol
+
+        let winner = isWin(game.board)
+
+        if (winner) {
+            return res.json({
+                win: winner,
+                board: game.board
+            })
+        }
+
+        if (!game.board.includes('')) {
+            return res.json({
+                draw: true,
+                board: game.board
+            })
+        }
+
+        let randomIndex
+        do {
+            randomIndex = Math.floor(Math.random() * game.board.length)
+        } while (game.board[randomIndex] !== '')
+
+        game.board[randomIndex] = game.oppositeSymbol
+
+        winner = isWin(game.board)
+
+        if (winner) {
+            return res.json({
+                win: winner,
+                board: game.board
+            })
+        }
+
+        return res.json({
+            message: 'placed on-board',
+            board: game.board
+        })
+    }
+})
+
+function isWin(board) {
+    if (board[0] === board[1] && board[1] == board[2] && board[0] !== '') {
+        return board[0]
+    }
+
+    if (board[3] === board[4] && board[4] == board[5] && board[3] !== '') {
+        return board[3]
+    }
+
+    if (board[6] === board[7] && board[7] == board[8] && board[6] !== '') {
+        return board[6]
+    }
+
+    if (board[0] === board[3] && board[3] == board[6] && board[0] !== '') {
+        return board[0]
+    }
+
+    if (board[1] === board[4] && board[4] == board[7] && board[1] !== '') {
+        return board[1]
+    }
+
+    if (board[2] === board[5] && board[5] == board[8] && board[2] !== '') {
+        return board[2]
+    }
+
+    if (board[0] === board[4] && board[4] == board[8] && board[0] !== '') {
+        return board[0]
+    }
+
+    if (board[2] === board[4] && board[4] == board[6] && board[2] !== '') {
+        return board[2]
+    }
+    return null
+}
 
 async function main() {
     try {
